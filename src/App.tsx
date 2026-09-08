@@ -145,8 +145,8 @@ export function App() {
           <button onClick={() => setPeriod(90)}>90D</button>
           <button onClick={() => setPeriod()}>ALL</button>
         </div>
-        <label>From<input type="date" value={filters.from} onChange={(event) => update("from", event.target.value)} /></label>
-        <label>To<input type="date" value={filters.to} onChange={(event) => update("to", event.target.value)} /></label>
+        <label>From<input type="date" value={filters.from} onClick={(event) => event.currentTarget.showPicker?.()} onChange={(event) => update("from", event.target.value)} /></label>
+        <label>To<input type="date" value={filters.to} onClick={(event) => event.currentTarget.showPicker?.()} onChange={(event) => update("to", event.target.value)} /></label>
         <label>Project<select value={filters.project} onChange={(event) => update("project", event.target.value)}><option value="">All projects</option>{data.filters.projects.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Provider<select value={filters.provider} onChange={(event) => update("provider", event.target.value)}><option value="">All providers</option>{data.filters.providers.map((item) => <option key={item}>{item}</option>)}</select></label>
         <label>Model<select value={filters.model} onChange={(event) => update("model", event.target.value)}><option value="">All models</option>{data.filters.models.map((item) => <option key={item}>{item}</option>)}</select></label>
