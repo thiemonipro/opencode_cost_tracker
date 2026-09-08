@@ -23,6 +23,7 @@ type Filters = {
 const initialFilters: Filters = { from: "", to: "", project: "", provider: "", model: "" }
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 })
+const averageCost = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 3 })
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 })
 const integer = new Intl.NumberFormat("en-US")
 
@@ -187,7 +188,7 @@ export function App() {
               <thead><tr><th>Model</th><th>Cost</th><th>Share</th><th>Requests</th><th>Avg / req.</th><th>Cache read</th></tr></thead>
               <tbody>{data.models.map((item, index) => {
                 const cacheShare = item.tokens.input + item.tokens.cacheRead > 0 ? item.tokens.cacheRead / (item.tokens.input + item.tokens.cacheRead) : 0
-                return <tr key={`${item.provider}/${item.model}`}><td><i className="model-dot" style={{ background: modelColors[index % modelColors.length] }} /><strong>{item.model}</strong><small>{item.provider}</small></td><td>{money.format(item.cost)}</td><td>{data.overview.cost ? `${(item.cost / data.overview.cost * 100).toFixed(1)}%` : "0%"}</td><td>{integer.format(item.requests)}</td><td>{money.format(item.requests ? item.cost / item.requests : 0)}</td><td>{(cacheShare * 100).toFixed(1)}%</td></tr>
+                return <tr key={`${item.provider}/${item.model}`}><td><i className="model-dot" style={{ background: modelColors[index % modelColors.length] }} /><strong>{item.model}</strong><small>{item.provider}</small></td><td>{money.format(item.cost)}</td><td>{data.overview.cost ? `${(item.cost / data.overview.cost * 100).toFixed(1)}%` : "0%"}</td><td>{integer.format(item.requests)}</td><td>{averageCost.format(item.requests ? item.cost / item.requests : 0)}</td><td>{(cacheShare * 100).toFixed(1)}%</td></tr>
               })}</tbody>
             </table>
           </div>
