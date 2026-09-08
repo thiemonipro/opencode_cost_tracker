@@ -184,6 +184,7 @@ export function App() {
 
       <section className="filter-bar" aria-label="Dashboard filters">
         <div className="periods">
+          <button onClick={() => setPeriod(1)}>TODAY</button>
           <button onClick={() => setPeriod(7)}>7D</button>
           <button onClick={() => setPeriod(30)}>30D</button>
           <button onClick={() => setPeriod(90)}>90D</button>

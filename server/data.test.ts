@@ -79,6 +79,18 @@ describe("OpenCodeData", () => {
     expect(dashboard.timeline.every((entry) => entry.date === "2026-01-02")).toBe(true)
   })
 
+  it("supports a single calendar-day range", () => {
+    const data = new OpenCodeData(path)
+    const dashboard = data.dashboard({ from: "2026-01-01", to: "2026-01-01" })
+    data.close()
+
+    expect(dashboard.overview.requests).toBe(1)
+    expect(dashboard.overview.cost).toBe(1.25)
+    expect(dashboard.timeline).toEqual([
+      expect.objectContaining({ date: "2026-01-01", model: "test-provider/model-a", cost: 1.25 }),
+    ])
+  })
+
   it("filters by project without changing filter options", () => {
     const data = new OpenCodeData(path)
     const dashboard = data.dashboard({ project: "project-b" })
