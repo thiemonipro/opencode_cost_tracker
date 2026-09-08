@@ -61,6 +61,12 @@ h1 em { color: var(--accent); font-family: "Newsreader", serif; font-weight: 400
 table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
 th { padding: 13px 16px; color: var(--muted); text-align: right; border-bottom: 1px solid var(--line); font: 9px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
 th:first-child, th:nth-child(2), th:nth-child(3) { text-align: left; }
+.sort-button { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 100%; padding: 0; color: inherit; text-align: inherit; background: transparent; border: 0; cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; }
+th:first-child .sort-button, th:nth-child(2) .sort-button, th:nth-child(3) .sort-button { justify-content: flex-start; }
+.sort-button:hover, .sort-button:focus-visible, th[aria-sort="ascending"] .sort-button, th[aria-sort="descending"] .sort-button { color: var(--accent); }
+.sort-button:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+.sort-indicator { width: 0; height: 0; border-right: 4px solid transparent; border-left: 4px solid transparent; border-top: 5px solid currentColor; opacity: .35; }
+.sort-button[data-direction="asc"] .sort-indicator { border-top: 0; border-bottom: 5px solid currentColor; }
 td { padding: 14px 16px; text-align: right; border-bottom: 1px solid #25231f; font-family: "DM Mono", monospace; }
 td:first-child, td:nth-child(2), td:nth-child(3) { text-align: left; }
 tbody tr:last-child td { border-bottom: 0; }

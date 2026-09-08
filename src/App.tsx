@@ -20,6 +20,14 @@ type Filters = {
   model: string
 }
 
+type ModelSortKey = "model" | "cost" | "share" | "requests" | "averageCost" | "cacheRead"
+type SortDirection = "asc" | "desc"
+
+type ModelSort = {
+  key: ModelSortKey
+  direction: SortDirection
+}
+
 const initialFilters: Filters = { from: "", to: "", project: "", provider: "", model: "" }
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 })
@@ -76,6 +84,7 @@ function Loading() {
 
 export function App() {
   const [filters, setFilters] = useState<Filters>(initialFilters)
+  const [modelSort, setModelSort] = useState<ModelSort>({ key: "cost", direction: "desc" })
   const [data, setData] = useState<DashboardData>()
   const [error, setError] = useState<string>()
   const [loading, setLoading] = useState(true)
@@ -117,12 +126,47 @@ export function App() {
   const modelNames = data.models.map((item) => `${item.provider}/${item.model}`)
   const timeline = mergeTimeline(data.timeline, modelNames)
   const totalTokens = Object.values(data.overview.tokens).reduce((sum, value) => sum + value, 0)
+  const modelRows = data.models.map((item, index) => {
+    const cacheRead = item.tokens.input + item.tokens.cacheRead > 0 ? item.tokens.cacheRead / (item.tokens.input + item.tokens.cacheRead) : 0
+    return {
+      item,
+      colorIndex: index,
+      cost: item.cost,
+      requests: item.requests,
+      share: data.overview.cost ? item.cost / data.overview.cost : 0,
+      averageCost: item.requests ? item.cost / item.requests : 0,
+      cacheRead,
+    }
+  }).sort((a, b) => {
+    const aValue = modelSort.key === "model" ? a.item.model : a[modelSort.key]
+    const bValue = modelSort.key === "model" ? b.item.model : b[modelSort.key]
+    const comparison = typeof aValue === "string" && typeof bValue === "string"
+      ? aValue.localeCompare(bValue)
+      : Number(aValue) - Number(bValue)
+    if (comparison !== 0) return modelSort.direction === "asc" ? comparison : -comparison
+    return `${a.item.provider}/${a.item.model}`.localeCompare(`${b.item.provider}/${b.item.model}`)
+  })
 
   const update = (key: keyof Filters, value: string) => setFilters((current) => ({ ...current, [key]: value }))
   const setPeriod = (days?: number) => setFilters((current) => ({
     ...current,
     ...(days ? dateRange(days) : { from: "", to: "" }),
   }))
+  const sortModels = (key: ModelSortKey) => setModelSort((current) => ({
+    key,
+    direction: current.key === key ? current.direction === "asc" ? "desc" : "asc" : key === "model" ? "asc" : "desc",
+  }))
+  const sortLabel = (key: ModelSortKey, label: string) => (
+    <button
+      className="sort-button"
+      type="button"
+      data-direction={modelSort.key === key ? modelSort.direction : undefined}
+      onClick={() => sortModels(key)}
+      aria-label={`Sort by ${label}`}
+    >
+      {label}<span className="sort-indicator" aria-hidden="true" />
+    </button>
+  )
 
   return (
     <main className="app-shell">
@@ -182,16 +226,20 @@ export function App() {
 
       <section className="split-grid">
         <div className="panel">
-          <div className="section-heading"><div><span>02 / Models</span><h2>Cost profile</h2></div></div>
-          <div className="table-scroll">
-            <table>
-              <thead><tr><th>Model</th><th>Cost</th><th>Share</th><th>Requests</th><th>Avg / req.</th><th>Cache read</th></tr></thead>
-              <tbody>{data.models.map((item, index) => {
-                const cacheShare = item.tokens.input + item.tokens.cacheRead > 0 ? item.tokens.cacheRead / (item.tokens.input + item.tokens.cacheRead) : 0
-                return <tr key={`${item.provider}/${item.model}`}><td><i className="model-dot" style={{ background: modelColors[index % modelColors.length] }} /><strong>{item.model}</strong><small>{item.provider}</small></td><td>{money.format(item.cost)}</td><td>{data.overview.cost ? `${(item.cost / data.overview.cost * 100).toFixed(1)}%` : "0%"}</td><td>{integer.format(item.requests)}</td><td>{averageCost.format(item.requests ? item.cost / item.requests : 0)}</td><td>{(cacheShare * 100).toFixed(1)}%</td></tr>
-              })}</tbody>
-            </table>
-          </div>
+           <div className="section-heading"><div><span>02 / Models</span><h2>Cost profile</h2></div></div>
+           <div className="table-scroll">
+             <table>
+               <thead><tr>
+                 <th aria-sort={modelSort.key === "model" ? modelSort.direction === "asc" ? "ascending" : "descending" : "none"}>{sortLabel("model", "Model")}</th>
+                 <th aria-sort={modelSort.key === "cost" ? modelSort.direction === "asc" ? "ascending" : "descending" : "none"}>{sortLabel("cost", "Cost")}</th>
+                 <th aria-sort={modelSort.key === "share" ? modelSort.direction === "asc" ? "ascending" : "descending" : "none"}>{sortLabel("share", "Share")}</th>
+                 <th aria-sort={modelSort.key === "requests" ? modelSort.direction === "asc" ? "ascending" : "descending" : "none"}>{sortLabel("requests", "Requests")}</th>
+                 <th aria-sort={modelSort.key === "averageCost" ? modelSort.direction === "asc" ? "ascending" : "descending" : "none"}>{sortLabel("averageCost", "Avg / req.")}</th>
+                 <th aria-sort={modelSort.key === "cacheRead" ? modelSort.direction === "asc" ? "ascending" : "descending" : "none"}>{sortLabel("cacheRead", "Cache read")}</th>
+               </tr></thead>
+               <tbody>{modelRows.map(({ item, colorIndex, share, averageCost: average, cacheRead }) => <tr key={`${item.provider}/${item.model}`}><td><i className="model-dot" style={{ background: modelColors[colorIndex % modelColors.length] }} /><strong>{item.model}</strong><small>{item.provider}</small></td><td>{money.format(item.cost)}</td><td>{`${(share * 100).toFixed(1)}%`}</td><td>{integer.format(item.requests)}</td><td>{averageCost.format(average)}</td><td>{(cacheRead * 100).toFixed(1)}%</td></tr>)}</tbody>
+             </table>
+           </div>
         </div>
 
         <div className="panel projects-panel">
