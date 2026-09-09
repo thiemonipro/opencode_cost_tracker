@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -125,6 +127,7 @@ export function App() {
 
   const modelNames = data.models.map((item) => `${item.provider}/${item.model}`)
   const timeline = mergeTimeline(data.timeline, modelNames)
+  const isSingleDay = timeline.length === 1
   const totalTokens = Object.values(data.overview.tokens).reduce((sum, value) => sum + value, 0)
   const modelRows = data.models.map((item, index) => {
     const cacheRead = item.tokens.input + item.tokens.cacheRead > 0 ? item.tokens.cacheRead / (item.tokens.input + item.tokens.cacheRead) : 0
@@ -207,19 +210,29 @@ export function App() {
 
       <section className="panel timeline-panel">
         <div className="section-heading">
-          <div><span>01 / Cost over time</span><h2>Where the meter moved</h2></div>
+          <div><span>01 / Cost over time</span><h2>{isSingleDay ? "Today's model mix" : "Where the meter moved"}</h2></div>
           <div className="legend">{modelNames.slice(0, 6).map((model, index) => <span key={model}><i style={{ background: modelColors[index % modelColors.length] }} />{shortModel(model)}</span>)}</div>
         </div>
         {timeline.length > 0 ? (
           <div className="chart">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={timeline} margin={{ top: 8, right: 4, bottom: 0, left: -18 }}>
-                <CartesianGrid stroke="#292723" vertical={false} />
-                <XAxis dataKey="date" tickFormatter={(value: string) => value.slice(5)} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={28} />
-                <YAxis tickFormatter={(value: number) => `$${value}`} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: "#181714", border: "1px solid #3b3832", borderRadius: 0 }} formatter={(value) => money.format(Number(value))} />
-                {modelNames.map((model, index) => <Area key={model} type="monotone" dataKey={model} stackId="cost" stroke={modelColors[index % modelColors.length]} fill={modelColors[index % modelColors.length]} fillOpacity={0.72} />)}
-              </AreaChart>
+              {isSingleDay ? (
+                <BarChart data={timeline} margin={{ top: 8, right: 4, bottom: 0, left: -18 }}>
+                  <CartesianGrid stroke="#292723" vertical={false} />
+                  <XAxis dataKey="date" tickFormatter={(value: string) => value.slice(5)} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={(value: number) => `$${value}`} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ background: "#181714", border: "1px solid #3b3832", borderRadius: 0 }} formatter={(value) => money.format(Number(value))} />
+                  {modelNames.map((model, index) => <Bar key={model} dataKey={model} stackId="cost" fill={modelColors[index % modelColors.length]} />)}
+                </BarChart>
+              ) : (
+                <AreaChart data={timeline} margin={{ top: 8, right: 4, bottom: 0, left: -18 }}>
+                  <CartesianGrid stroke="#292723" vertical={false} />
+                  <XAxis dataKey="date" tickFormatter={(value: string) => value.slice(5)} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={28} />
+                  <YAxis tickFormatter={(value: number) => `$${value}`} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ background: "#181714", border: "1px solid #3b3832", borderRadius: 0 }} formatter={(value) => money.format(Number(value))} />
+                  {modelNames.map((model, index) => <Area key={model} type="monotone" dataKey={model} stackId="cost" stroke={modelColors[index % modelColors.length]} fill={modelColors[index % modelColors.length]} fillOpacity={0.72} />)}
+                </AreaChart>
+              )}
             </ResponsiveContainer>
           </div>
         ) : <div className="empty">No model requests in this period.</div>}
