@@ -26,6 +26,7 @@ const requestCte = `
       ) AS occurred_at,
       json_extract(m.data, '$.providerID') AS provider,
       json_extract(m.data, '$.modelID') AS model,
+      json_extract(m.data, '$.variant') AS reasoning_level,
       COALESCE(json_extract(m.data, '$.cost'), 0) AS cost,
       COALESCE(json_extract(m.data, '$.tokens.input'), 0) AS tokens_input,
       COALESCE(json_extract(m.data, '$.tokens.output'), 0) AS tokens_output,
@@ -213,13 +214,14 @@ export class OpenCodeData {
          session_id,
          session_title,
          project_id,
-         project_name,
-         directory,
-         COUNT(*) AS requests,
-         SUM(cost) AS cost,
-         SUM(tokens_input + tokens_output + tokens_reasoning + cache_read + cache_write) AS tokens,
-         GROUP_CONCAT(DISTINCT provider || '/' || model) AS models,
-         MAX(occurred_at) AS last_active
+          project_name,
+          directory,
+          COUNT(*) AS requests,
+          SUM(cost) AS cost,
+          SUM(tokens_input + tokens_output + tokens_reasoning + cache_read + cache_write) AS tokens,
+          GROUP_CONCAT(DISTINCT provider || '/' || model) AS models,
+          GROUP_CONCAT(DISTINCT COALESCE(reasoning_level, 'Not recorded')) AS reasoning_levels,
+          MAX(occurred_at) AS last_active
        FROM requests ${filtered.sql}
        GROUP BY session_id, session_title, project_id, project_name, directory
        ORDER BY cost DESC
@@ -315,6 +317,7 @@ export class OpenCodeData {
         cost: number(row.cost),
         tokens: number(row.tokens),
         models: String(row.models ?? "").split(",").filter(Boolean),
+        reasoningLevels: String(row.reasoning_levels ?? "Not recorded").split(",").filter(Boolean),
         lastActive: number(row.last_active),
       })),
     }

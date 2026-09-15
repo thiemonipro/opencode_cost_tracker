@@ -54,6 +54,7 @@ h1 em { color: var(--accent); font-family: "Newsreader", serif; font-weight: 400
 .legend { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px 15px; max-width: 700px; }
 .legend span { display: flex; align-items: center; gap: 6px; color: var(--muted); font: 9px "DM Mono", monospace; text-transform: none; letter-spacing: 0; }
 .legend i, .model-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
+.legend .total-legend { width: 14px; height: 2px; border-radius: 0; background: #f3e8d2; }
 .empty { display: grid; place-items: center; min-height: 260px; color: var(--muted); font: 12px "DM Mono", monospace; }
 
 .split-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(330px, .75fr); gap: 28px; }

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import {
   Area,
-  AreaChart,
   Bar,
-  BarChart,
+  ComposedChart,
   CartesianGrid,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -53,6 +53,7 @@ function mergeTimeline(items: DashboardData["timeline"], models: string[]) {
   for (const item of items) {
     const row = dates.get(item.date) ?? { date: item.date }
     row[item.model] = item.cost
+    row.total = Number(row.total ?? 0) + item.cost
     dates.set(item.date, row)
   }
   return Array.from(dates.values()).map((row) => {
@@ -211,27 +212,32 @@ export function App() {
       <section className="panel timeline-panel">
         <div className="section-heading">
           <div><span>01 / Cost over time</span><h2>{isSingleDay ? "Today's model mix" : "Where the meter moved"}</h2></div>
-          <div className="legend">{modelNames.slice(0, 6).map((model, index) => <span key={model}><i style={{ background: modelColors[index % modelColors.length] }} />{shortModel(model)}</span>)}</div>
+          <div className="legend">
+            {modelNames.slice(0, 6).map((model, index) => <span key={model}><i style={{ background: modelColors[index % modelColors.length] }} />{shortModel(model)}</span>)}
+            <span><i className="total-legend" />Total / day</span>
+          </div>
         </div>
         {timeline.length > 0 ? (
           <div className="chart">
             <ResponsiveContainer width="100%" height="100%">
               {isSingleDay ? (
-                <BarChart data={timeline} margin={{ top: 8, right: 4, bottom: 0, left: -18 }}>
+                <ComposedChart data={timeline} margin={{ top: 8, right: 4, bottom: 0, left: -18 }}>
                   <CartesianGrid stroke="#292723" vertical={false} />
                   <XAxis dataKey="date" tickFormatter={(value: string) => value.slice(5)} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(value: number) => `$${value}`} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={{ background: "#181714", border: "1px solid #3b3832", borderRadius: 0 }} formatter={(value) => money.format(Number(value))} />
                   {modelNames.map((model, index) => <Bar key={model} dataKey={model} stackId="cost" fill={modelColors[index % modelColors.length]} />)}
-                </BarChart>
+                  <Line type="monotone" dataKey="total" name="Total / day" stroke="#f3e8d2" strokeWidth={2} dot={{ r: 3, fill: "#f3e8d2", strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                </ComposedChart>
               ) : (
-                <AreaChart data={timeline} margin={{ top: 8, right: 4, bottom: 0, left: -18 }}>
+                <ComposedChart data={timeline} margin={{ top: 8, right: 4, bottom: 0, left: -18 }}>
                   <CartesianGrid stroke="#292723" vertical={false} />
                   <XAxis dataKey="date" tickFormatter={(value: string) => value.slice(5)} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={28} />
                   <YAxis tickFormatter={(value: number) => `$${value}`} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={{ background: "#181714", border: "1px solid #3b3832", borderRadius: 0 }} formatter={(value) => money.format(Number(value))} />
                   {modelNames.map((model, index) => <Area key={model} type="monotone" dataKey={model} stackId="cost" stroke={modelColors[index % modelColors.length]} fill={modelColors[index % modelColors.length]} fillOpacity={0.72} />)}
-                </AreaChart>
+                  <Line type="monotone" dataKey="total" name="Total / day" stroke="#f3e8d2" strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
+                </ComposedChart>
               )}
             </ResponsiveContainer>
           </div>
@@ -272,8 +278,8 @@ export function App() {
         <div className="section-heading"><div><span>04 / Sessions</span><h2>Most expensive work</h2></div><small>Top 25 by estimated cost</small></div>
         <div className="table-scroll">
           <table>
-            <thead><tr><th>Session</th><th>Project</th><th>Models</th><th>Requests</th><th>Tokens</th><th>Last active</th><th>Cost</th></tr></thead>
-            <tbody>{data.sessions.map((session) => <tr key={session.id}><td><strong>{session.title}</strong><small>{session.id.slice(0, 14)}</small></td><td>{session.project}</td><td><div className="model-pills">{session.models.slice(0, 2).map((model) => <span key={model}>{shortModel(model)}</span>)}</div></td><td>{integer.format(session.requests)}</td><td>{compact.format(session.tokens)}</td><td>{new Date(session.lastActive).toLocaleDateString()}</td><td className="cost-cell">{money.format(session.cost)}</td></tr>)}</tbody>
+            <thead><tr><th>Session</th><th>Project</th><th>Models</th><th>Reasoning</th><th>Requests</th><th>Tokens</th><th>Last active</th><th>Cost</th></tr></thead>
+            <tbody>{data.sessions.map((session) => <tr key={session.id}><td><strong>{session.title}</strong><small>{session.id.slice(0, 14)}</small></td><td>{session.project}</td><td><div className="model-pills">{session.models.slice(0, 2).map((model) => <span key={model}>{shortModel(model)}</span>)}</div></td><td><div className="model-pills">{session.reasoningLevels.map((level) => <span key={level}>{level}</span>)}</div></td><td>{integer.format(session.requests)}</td><td>{compact.format(session.tokens)}</td><td>{new Date(session.lastActive).toLocaleDateString()}</td><td className="cost-cell">{money.format(session.cost)}</td></tr>)}</tbody>
           </table>
         </div>
       </section>

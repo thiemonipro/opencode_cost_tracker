@@ -55,6 +55,7 @@ export interface DashboardData {
     cost: number
     tokens: number
     models: string[]
+    reasoningLevels: string[]
     lastActive: number
   }>
 }

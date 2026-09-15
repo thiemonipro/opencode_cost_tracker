@@ -34,19 +34,20 @@ describe("OpenCodeData", () => {
     `)
 
     const insert = db.prepare("INSERT INTO message VALUES (?, ?, ?, ?)")
-    const add = (id: string, session: string, date: string, model: string, cost: number, cacheRead: number) => {
+    const add = (id: string, session: string, date: string, model: string, cost: number, cacheRead: number, variant?: string) => {
       const occurredAt = new Date(`${date}T12:00:00`).getTime()
       insert.run(id, session, occurredAt, JSON.stringify({
         role: "assistant",
         providerID: "test-provider",
         modelID: model,
+        ...(variant ? { variant } : {}),
         cost,
         tokens: { input: 100, output: 20, reasoning: 5, cache: { read: cacheRead, write: 2 } },
         time: { created: occurredAt - 1_000, completed: occurredAt },
       }))
     }
-    add("message-a", "session-a", "2026-01-01", "model-a", 1.25, 400)
-    add("message-b", "session-a", "2026-01-02", "model-b", 2.5, 100)
+    add("message-a", "session-a", "2026-01-01", "model-a", 1.25, 400, "high")
+    add("message-b", "session-a", "2026-01-02", "model-b", 2.5, 100, "medium")
     add("message-c", "session-b", "2026-01-02", "model-a", 0.75, 0)
     db.close()
   })
@@ -66,6 +67,8 @@ describe("OpenCodeData", () => {
       ["model-a", 2],
     ])
     expect(dashboard.sessions[0]).toMatchObject({ id: "session-a", cost: 3.75, project: "alpha" })
+    expect(dashboard.sessions[0].reasoningLevels).toEqual(expect.arrayContaining(["high", "medium"]))
+    expect(dashboard.sessions.find((session) => session.id === "session-b")?.reasoningLevels).toEqual(["Not recorded"])
   })
 
   it("uses inclusive local calendar-day filters", () => {
