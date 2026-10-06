@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Area,
   Bar,
@@ -16,6 +16,7 @@ import { mergeTimeline, modelsUsedOnDay, type TimelineRow } from "./timeline"
 import type { DashboardData } from "./types"
 
 const modelColors = ["#f56f46", "#e9b949", "#57a58c", "#678cc8", "#a578c4", "#cf6f8f", "#8fa65a", "#bc7c47"]
+const refreshInterval = 5 * 60 * 1000
 
 type Filters = {
   from: string
@@ -34,6 +35,10 @@ type ModelSort = {
 }
 
 const initialFilters: Filters = { from: "", to: "", project: "", provider: "", model: "" }
+
+function filtersMatch(left: Filters, right: Filters) {
+  return Object.keys(left).every((key) => left[key as keyof Filters] === right[key as keyof Filters])
+}
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 })
 const averageCost = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 3 })
@@ -107,34 +112,95 @@ export function App() {
   const [modelSort, setModelSort] = useState<ModelSort>({ key: "cost", direction: "desc" })
   const [data, setData] = useState<DashboardData>()
   const [error, setError] = useState<string>()
+  const [errorKind, setErrorKind] = useState<"refresh" | "filters">("refresh")
   const [loading, setLoading] = useState(true)
+  const successfulFilters = useRef(filters)
+  const skipNextFetch = useRef(false)
 
   useEffect(() => {
     const controller = new AbortController()
+    const skipInitialFetch = skipNextFetch.current
+    skipNextFetch.current = false
     const params = new URLSearchParams()
     Object.entries(filters).forEach(([key, value]) => value && params.set(key, value))
-    setLoading(true)
-    fetch(`/api/dashboard?${params}`, { signal: controller.signal })
-      .then(async (response) => {
+    let timeout: ReturnType<typeof setTimeout> | undefined
+    let nextRefreshAt: number | undefined
+    let inFlight = false
+
+    const scheduleRefresh = () => {
+      if (timeout) clearTimeout(timeout)
+      if (nextRefreshAt === undefined) return
+      timeout = setTimeout(checkRefresh, Math.max(0, nextRefreshAt - Date.now()))
+    }
+
+    const refresh = async (background = false) => {
+      if (inFlight) return
+      inFlight = true
+      if (!background) setLoading(true)
+      try {
+        const response = await fetch(`/api/dashboard?${params}`, { signal: controller.signal })
         if (!response.ok) throw new Error((await response.json()).detail ?? "Request failed")
-        return response.json() as Promise<DashboardData>
-      })
-      .then((result) => {
+        const result = await response.json() as DashboardData
+        successfulFilters.current = filters
         setData(result)
         setError(undefined)
-      })
-      .catch((reason: unknown) => {
+        setErrorKind("refresh")
+      } catch (reason: unknown) {
         if (reason instanceof DOMException && reason.name === "AbortError") return
-        setError(reason instanceof Error ? reason.message : String(reason))
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false)
-      })
-    return () => controller.abort()
+        const message = reason instanceof Error ? reason.message : String(reason)
+        if (data && !filtersMatch(filters, successfulFilters.current)) {
+          skipNextFetch.current = true
+          setErrorKind("filters")
+          setError(`Could not load selected filters; selection restored. ${message}`)
+          setFilters(successfulFilters.current)
+        } else {
+          setErrorKind("refresh")
+          setError(message)
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          inFlight = false
+          if (!background) setLoading(false)
+          nextRefreshAt = Date.now() + refreshInterval
+          scheduleRefresh()
+        }
+      }
+    }
+
+    function checkRefresh() {
+      if (document.visibilityState !== "visible") return
+      if (nextRefreshAt !== undefined && Date.now() >= nextRefreshAt) {
+        void refresh(true)
+      } else {
+        scheduleRefresh()
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") checkRefresh()
+      else if (timeout) {
+        clearTimeout(timeout)
+        timeout = undefined
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    if (skipInitialFetch) {
+      nextRefreshAt = Date.now() + refreshInterval
+      scheduleRefresh()
+    } else {
+      void refresh()
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      controller.abort()
+    }
   }, [filters])
 
   if (!data && loading) return <Loading />
-  if (!data || error) {
+  if (!data) {
     return (
       <main className="status-page error">
         <strong>Could not read OpenCode data</strong>
@@ -218,6 +284,8 @@ export function App() {
         <label>Model<select value={filters.model} onChange={(event) => update("model", event.target.value)}><option value="">All models</option>{data.filters.models.map((item) => <option key={item}>{item}</option>)}</select></label>
         {Object.values(filters).some(Boolean) && <button className="clear" onClick={() => setFilters(initialFilters)}>Clear</button>}
       </section>
+
+      {error && <p className="refresh-error" role="alert">{errorKind === "refresh" ? `Automatic refresh failed: ${error}. Showing the last successful data.` : error}</p>}
 
       <section className={`metrics ${loading ? "refreshing" : ""}`}>
         <Metric label="Estimated cost" value={money.format(data.overview.cost)} detail={`${money.format(data.overview.averageCostPerActiveDay)} / active day`} />

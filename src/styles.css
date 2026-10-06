@@ -36,6 +36,7 @@ h1 em { color: var(--accent); font-family: "Newsreader", serif; font-weight: 400
 .periods button + button { border-left: 0; }
 .periods button:hover, .clear:hover { color: var(--accent); border-color: var(--accent); }
 .clear { color: var(--accent); }
+.refresh-error { margin: 0; padding: 10px 0; color: var(--accent); font: 11px/1.5 "DM Mono", monospace; }
 
 .metrics { display: grid; grid-template-columns: 1.25fr 1fr 1fr 1fr; border-bottom: 1px solid var(--line); transition: opacity .2s; }
 .metrics.refreshing { opacity: .45; }
