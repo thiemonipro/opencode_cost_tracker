@@ -2,6 +2,14 @@
 
 A local-first dashboard for understanding the estimated LLM cost recorded by OpenCode.
 
+## Screenshots
+
+![Dashboard overview](assets/dashboard-overview.png)
+
+![Model, project, and session breakdowns](assets/dashboard-breakdowns.png)
+
+![Most expensive sessions](assets/dashboard-sessions.png)
+
 ## Features
 
 - Estimated cost and token totals
