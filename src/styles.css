@@ -27,7 +27,8 @@ h1 em { color: var(--accent); font-family: "Newsreader", serif; font-weight: 400
 .masthead-note code { max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--ink); font: 11px "DM Mono", monospace; white-space: nowrap; }
 .masthead-note small { font-size: 11px; }
 
-.filter-bar { display: flex; gap: 18px; align-items: flex-end; padding: 22px 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.filter-bar { display: flex; gap: 18px; align-items: flex-end; padding: 22px 0; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.filter-bar::-webkit-scrollbar { display: none; }
 .filter-bar label { display: grid; gap: 6px; flex: 0 0 auto; }
 .filter-bar input, .filter-bar select { min-width: 132px; height: 34px; padding: 0 9px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 0; font: 11px "DM Mono", monospace; }
 .filter-bar select { min-width: 155px; }
