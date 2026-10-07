@@ -2,14 +2,23 @@
   "name": "opencode-cost-tracker",
   "private": true,
   "version": "0.1.0",
+  "description": "Local dashboard for estimated OpenCode LLM costs",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "opencode-cost-tracker": "bin/opencode-cost-tracker.js"
+  },
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "tsx watch server/index.ts",
     "dev:web": "vite",
-    "build": "tsc -b && vite build",
-    "start": "NODE_ENV=production tsx server/index.ts",
+    "build": "tsc -b && tsc -p tsconfig.build.json && vite build",
+    "start": "node bin/opencode-cost-tracker.js",
     "test": "vitest run",
+    "test:production": "node scripts/smoke-test.mjs",
     "typecheck": "tsc -b"
   },
   "dependencies": {

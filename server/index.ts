@@ -10,7 +10,7 @@ const data = new OpenCodeData()
 const app = createApp(data)
 
 if (process.env.NODE_ENV === "production") {
-  const dist = join(fileURLToPath(new URL("..", import.meta.url)), "dist")
+  const dist = fileURLToPath(new URL("../../dist/", import.meta.url))
   if (existsSync(dist)) {
     app.use(express.static(dist))
     app.get("/{*path}", (_request, response) => response.sendFile(join(dist, "index.html")))
