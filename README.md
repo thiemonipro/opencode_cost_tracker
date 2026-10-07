@@ -82,8 +82,8 @@ The formula lives in [thiemonipro/homebrew-tap](https://github.com/thiemonipro/h
 
 1. Update `version` in `package.json` and refresh the lockfile with `npm install --package-lock-only`.
 2. Run the verification commands above and `npm run test:production`, commit, and push the changes.
-3. Tag the commit as `v<version>` and publish a GitHub release.
-4. Update the formula's release archive URL and SHA-256 checksum in the tap.
+3. Tag the commit as `v<version>`, create a source archive with `git archive --format=tar.gz --prefix=opencode-cost-tracker-<version>/ --output=opencode-cost-tracker-<version>.tar.gz v<version>`, and upload it as an asset when publishing the GitHub release.
+4. Update the formula's release asset URL and SHA-256 checksum in the tap (`shasum -a 256 opencode-cost-tracker-<version>.tar.gz`).
 5. Run `brew install --build-from-source thiemonipro/tap/opencode-cost-tracker`, `brew test thiemonipro/tap/opencode-cost-tracker`, and `brew audit --strict thiemonipro/tap/opencode-cost-tracker` before pushing the tap update.
 
 The formula builds from the tagged source using `npm ci`, then keeps only production dependencies. Users update with `brew update && brew upgrade opencode-cost-tracker`.
