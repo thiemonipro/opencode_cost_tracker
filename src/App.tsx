@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { mergeTimeline, modelsUsedOnDay, type TimelineRow } from "./timeline"
+import { fillTimelineGaps, mergeTimeline, modelsUsedOnDay, type TimelineRow } from "./timeline"
 import type { DashboardData } from "./types"
 
 const modelColors = ["#f56f46", "#e9b949", "#57a58c", "#678cc8", "#a578c4", "#cf6f8f", "#8fa65a", "#bc7c47"]
@@ -62,13 +62,23 @@ function shortModel(value: string) {
 
 const timelineTooltipStyle = { background: "#181714", border: "1px solid #3b3832", borderRadius: 0 }
 
-function TimelineTooltipContent({ active, payload, label, models }: TooltipContentProps & { models: string[] }) {
-  if (!active || payload.length === 0) return null
+function TimelineTooltipContent({ active, payload, label, models, rows }: TooltipContentProps & { models: string[]; rows: TimelineRow[] }) {
+  if (!active) return null
 
   const row = payload.find((item) => item.payload)?.payload as TimelineRow | undefined
+    ?? rows.find((item) => item.date === String(label))
   if (!row) return null
 
   const usedModels = new Set(modelsUsedOnDay(row, models))
+  if (usedModels.size === 0) {
+    return (
+      <div className="no-usage-tooltip">
+        <strong>{label}</strong>
+        <span>No usage · {money.format(0)}</span>
+      </div>
+    )
+  }
+
   const filteredPayload = payload.filter((item) => {
     const dataKey = typeof item.dataKey === "string" ? item.dataKey : item.name
     return dataKey === "total" || (typeof dataKey === "string" && usedModels.has(dataKey))
@@ -84,8 +94,8 @@ function TimelineTooltipContent({ active, payload, label, models }: TooltipConte
   )
 }
 
-function TimelineTooltip({ models }: { models: string[] }) {
-  return <Tooltip content={(props) => <TimelineTooltipContent {...props} models={models} />} />
+function TimelineTooltip({ models, rows }: { models: string[]; rows: TimelineRow[] }) {
+  return <Tooltip content={(props) => <TimelineTooltipContent {...props} models={models} rows={rows} />} />
 }
 
 function Metric({ label, value, detail }: { label: string; value: string; detail: string }) {
@@ -210,7 +220,7 @@ export function App() {
   }
 
   const modelNames = data.models.map((item) => `${item.provider}/${item.model}`)
-  const timeline = mergeTimeline(data.timeline, modelNames)
+  const timeline = fillTimelineGaps(mergeTimeline(data.timeline, modelNames), filters.from, filters.to)
   const isSingleDay = timeline.length === 1
   const totalTokens = Object.values(data.overview.tokens).reduce((sum, value) => sum + value, 0)
   const modelRows = data.models.map((item, index) => {
@@ -310,7 +320,7 @@ export function App() {
                   <CartesianGrid stroke="#292723" vertical={false} />
                   <XAxis dataKey="date" tickFormatter={(value: string) => value.slice(5)} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(value: number) => `$${value}`} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <TimelineTooltip models={modelNames} />
+                  <TimelineTooltip models={modelNames} rows={timeline} />
                   {modelNames.map((model, index) => <Bar key={model} dataKey={model} stackId="cost" fill={modelColors[index % modelColors.length]} />)}
                   <Line type="monotone" dataKey="total" name="Total / day" stroke="#f3e8d2" strokeWidth={2} dot={{ r: 3, fill: "#f3e8d2", strokeWidth: 0 }} activeDot={{ r: 5 }} />
                 </ComposedChart>
@@ -319,7 +329,7 @@ export function App() {
                   <CartesianGrid stroke="#292723" vertical={false} />
                   <XAxis dataKey="date" tickFormatter={(value: string) => value.slice(5)} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={28} />
                   <YAxis tickFormatter={(value: number) => `$${value}`} tick={{ fill: "#89847b", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <TimelineTooltip models={modelNames} />
+                  <TimelineTooltip models={modelNames} rows={timeline} />
                   {modelNames.map((model, index) => <Area key={model} type="monotone" dataKey={model} stackId="cost" stroke={modelColors[index % modelColors.length]} fill={modelColors[index % modelColors.length]} fillOpacity={0.72} />)}
                   <Line type="monotone" dataKey="total" name="Total / day" stroke="#f3e8d2" strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
                 </ComposedChart>

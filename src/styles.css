@@ -53,6 +53,9 @@ h1 em { color: var(--accent); font-family: "Newsreader", serif; font-weight: 400
 .section-heading h2 { margin: 6px 0 0; font-size: 22px; font-weight: 500; letter-spacing: -.04em; }
 .section-heading > small { color: var(--muted); font: 10px "DM Mono", monospace; }
 .chart { height: 360px; padding: 24px 16px 10px; }
+.no-usage-tooltip { display: grid; gap: 6px; padding: 10px 12px; color: var(--ink); background: #181714; border: 1px solid #3b3832; font: 11px "DM Mono", monospace; }
+.no-usage-tooltip strong { font-weight: 500; }
+.no-usage-tooltip span { color: var(--muted); }
 .legend { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px 15px; max-width: 700px; }
 .legend span { display: flex; align-items: center; gap: 6px; color: var(--muted); font: 9px "DM Mono", monospace; text-transform: none; letter-spacing: 0; }
 .legend i, .model-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
