@@ -15,7 +15,8 @@ Environment variables:
   PORT              Server port (default: 4174)
   OPENCODE_DB_PATH  Path to the OpenCode SQLite database
 
-Without OPENCODE_DB_PATH, the database is discovered automatically.`)
+Without OPENCODE_DB_PATH, the database is discovered automatically using the
+OpenCode CLI (V2 path command, with a legacy CLI fallback).`)
 } else if (args.length > 0) {
   console.error("Unknown arguments. Run opencode-cost-tracker --help for usage.")
   process.exitCode = 1

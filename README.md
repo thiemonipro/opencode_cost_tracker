@@ -18,6 +18,7 @@ A local-first dashboard for understanding the estimated LLM cost recorded by Ope
 - Most expensive sessions
 - Date, project, provider, and model filters
 - Read-only access to the local OpenCode SQLite database
+- Combined legacy and V2 session history, with shared messages counted once
 
 The application does not read or expose prompt and response content. OpenCode's recorded cost can represent API-equivalent pricing for subscription providers, so the dashboard labels it as estimated cost rather than an invoice amount.
 
@@ -59,7 +60,7 @@ The production build compiles the server to `build/server` and the dashboard to 
 
 ## Database Discovery
 
-The server runs `opencode db path` and opens the result in read-only mode. Set `OPENCODE_DB_PATH` to use a different database:
+The server runs `opencode debug paths db` and opens the result in read-only mode. For older OpenCode CLI versions, it falls back to `opencode db path`. Set `OPENCODE_DB_PATH` to use a different database:
 
 ```sh
 OPENCODE_DB_PATH=/path/to/opencode.db npm start

@@ -1,7 +1,7 @@
 {
   "name": "opencode-cost-tracker",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local dashboard for estimated OpenCode LLM costs",
   "license": "MIT",
   "engines": {
